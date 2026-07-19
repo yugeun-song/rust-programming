@@ -1,0 +1,53 @@
+# Single Cargo package (no workspace, no per-topic crates). Each topic program is
+# an explicit [[bin]] target at src/bin/<theme>/<name>.rs, so one theme folder can
+# hold several independent programs. Auto-discovery cannot do this (it allows only
+# one binary per src/bin subfolder), so every binary is declared below; this
+# mirrors how rustlings registers each exercise as a [[bin]].
+# `cargo run --bin <theme>_<name>` runs one program. Source lives under src/;
+# compiled binaries land in target/ (Cargo-managed and gitignored). clippy, fmt,
+# rust-analyzer, and test all keep working because this stays a real Cargo package.
+# scripts/create_project.sh appends entries in the registry block below.
+# .project.toml is the authoritative policy record.
+
+[package]
+name = "rust_programming"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.96"
+# Every binary is declared explicitly below (theme subfolders are not
+# auto-discoverable), so Cargo's auto-target discovery is turned off.
+autobins = false
+
+# Lints apply to every target (all topic binaries). Kept intentionally light for
+# a learning archive: clippy's default group plus the unsafe guard.
+[lints.rust]
+unsafe_code = "warn"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+
+# --- topic binaries (managed by scripts/create_project.sh; keep entries here) ---
+# name = <theme>_<name> (or <theme> when the file is main.rs); path is
+# src/bin/<theme>/<name>.rs. Add topics with scripts/create_project.sh.
+
+[[bin]]
+name = "hello_world"
+path = "src/bin/hello_world/main.rs"
+
+# --- end topic binaries ---
+
+# Profiles. debug = 2 everywhere so gdb/rust-gdb/lldb keep full line and variable
+# information, including in optimized builds used for profiling.
+[profile.dev]
+debug = 2
+
+[profile.release]
+debug = 2
+strip = false
+
+# `perf` is an optimized profile that still keeps full debuginfo and symbols.
+# Build it with `cargo build --profile perf`.
+[profile.perf]
+inherits = "release"
+debug = 2
+strip = false

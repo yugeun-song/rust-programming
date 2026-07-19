@@ -1,0 +1,7 @@
+[toolchain]
+# Pin the stable channel. scripts/setup.sh installs the components idempotently.
+channel = "stable"
+# rust-src lets gdb/rust-gdb/rust-lldb step into the standard library source;
+# rust-analyzer supports editor tooling. rustfmt and clippy back fmt/lint.
+components = ["rustfmt", "clippy", "rust-src", "rust-analyzer"]
+profile = "default"

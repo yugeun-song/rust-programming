@@ -1,0 +1,151 @@
+# .project.toml
+# Single source of truth for the rust_programming study package.
+#
+# It systematizes the build system, coding style, file and directory naming
+# rules, the code-organization principle, the debug configuration, and the
+# planned topic taxonomy. README.md references this file. The Cargo files
+# (Cargo.toml, .cargo/config.toml, rust-toolchain.toml) are the executable
+# configuration and must stay in sync with the values recorded here. English
+# prose only.
+
+[project]
+name = "rust_programming"
+purpose = """
+A personal, broad study of the Rust language. It is a single Cargo package: each
+topic program is an explicit [[bin]] at src/bin/<theme>/<name>.rs, so a theme
+folder can hold several independent programs, each run with
+`cargo run --bin <theme>_<name>`. A learning archive, not a shipped product or a
+reusable library.
+"""
+
+[build]
+# Conventional single-package Cargo layout: no workspace, no per-topic crates.
+toolchain_channel = "stable"
+rustc_version = "1.96.0"
+edition = "2024"
+rust_version = "1.96"
+# cargo run   --bin <theme>_<name>  -> run one program (src/bin/<theme>/<name>.rs)
+# cargo build --bin <theme>_<name>  -> build just that program (not the whole set)
+# cargo check --bin <theme>_<name>  -> type-check one program, no codegen (fastest)
+# cargo build                       -> build every registered binary; incremental,
+#                                      so unchanged targets are fingerprint-skipped
+# Each program is an explicit [[bin]] in Cargo.toml (theme subfolders are not
+# auto-discovered), registered by scripts/create_project.sh. Source lives under
+# src/; compiled binaries land in target/ (Cargo-managed, gitignored). Profiles
+# (Cargo.toml [profile.*]): dev = debug 2; release = debug 2, strip false; perf =
+# inherits release, debug 2, strip false.
+profiles = ["dev", "release", "perf"]
+# Cargo aliases (.cargo/config.toml [alias]): b = build, t = test,
+# l = clippy --all-targets -- -D warnings, topic = run --bin.
+aliases = ["b", "t", "l", "topic"]
+# Optional mold/lld linker and sccache cache are opt-in only and never a build
+# dependency; see the comments in .cargo/config.toml.
+
+[style]
+formatter = "rustfmt"
+formatter_config = "defaults"    # rustfmt defaults; only stable-only tweaks.
+linter = "clippy"
+lint_policy = "deny-warnings"    # scripts/check.sh and `cargo l` run -D warnings.
+comments = "minimal"             # no comments unless the code cannot speak for itself.
+# Lints live in Cargo.toml [lints]: rust unsafe_code = warn; clippy all = warn.
+# Kept light on purpose so learning code is not fought by the linter.
+
+[naming]
+# Rust community standard (RFC 430 and the Rust API Guidelines). This is the
+# lowercase-and-underscore family, not Windows-style PascalCase; PascalCase is
+# reserved for type names only.
+files = "snake_case"
+directories = "snake_case"
+modules = "snake_case"
+crates = "snake_case"
+binaries = "snake_case"             # <theme>_<name>, or <theme> when the file is main.rs
+types = "UpperCamelCase"            # structs, enums, traits, type aliases
+constants = "SCREAMING_SNAKE_CASE"  # consts and statics
+
+[layout]
+# Management and organization follow the mainstream Rust unit: the package, with
+# its source under src/. There are no per-topic crates. Each topic program is an
+# explicit [[bin]] target at src/bin/<theme>/<name>.rs, so ONE theme folder can
+# hold SEVERAL independent programs -- binaries are declared explicitly because
+# Cargo's auto-discovery allows only one binary per src/bin subfolder. This is
+# the same approach rustlings uses (every exercise is registered as a [[bin]]).
+# Source lives under src/; compiled binaries land in target/ (Cargo-managed,
+# gitignored), so source and binaries stay separated. clippy, fmt, rust-analyzer,
+# and test all work because this stays a real Cargo package.
+principle = "one clear responsibility per program or directory"
+topic_layout = "src/bin/<theme>/<name>.rs (cargo run --bin <theme>_<name>)"
+hello_world = "src/bin/hello_world/main.rs (binary hello_world)"
+multi_program = "one [[bin]] per src/bin/<theme>/<name>.rs; several allowed per theme"
+# If a single program grows, organize its own folder with sibling modules
+# (main.rs + mod files), the way Tokio organizes src/net/tcp/.
+module_growth = "main.rs plus sibling module files inside the program's folder"
+# `common/` is reserved for future shared helpers. It would become a library
+# target (src/lib.rs or an explicit [lib] path), not a separate crate. Not
+# created yet.
+reserved = ["common"]
+# Topic programs are created on demand via scripts/create_project.sh <theme>
+# <name>; none exist up front beyond hello_world.
+scaffolding = "deferred"
+
+[debug]
+# Debugging and observability are first-class. Optional tools never block a build.
+rustflags = ["-C symbol-mangling-version=v0", "-C force-frame-pointers=yes"]
+debuginfo = "full in dev, release, and perf"
+components = ["rust-src", "rust-analyzer"]
+tools_supported = [
+    "gdb", "rust-gdb", "rust-lldb", "lldb",
+    "perf", "strace", "ltrace", "ftrace",
+    "mold", "sccache",
+]
+
+[taxonomy]
+# Planned topics. ROADMAP only: none exist until created on demand as
+# src/bin/<theme>/<name>.rs via scripts/create_project.sh <theme> <name>.
+# Concrete snake_case keywords; reserved keywords are suffixed (_type, _code,
+# _rules, _await).
+topics = [
+    # Language core
+    { name = "expression",     purpose = "Expressions, operators, and expression-oriented evaluation." },
+    { name = "binding",        purpose = "let bindings, mutability, shadowing, and scope." },
+    { name = "control_flow",   purpose = "if, loop, while, for, match, and loop labels." },
+    { name = "function",       purpose = "Functions, parameters, return values, and diverging functions." },
+    { name = "primitive_type", purpose = "Scalars and compound primitives: integers, floats, bool, char, tuple, array." },
+    # Data modeling
+    { name = "struct_type",    purpose = "Struct definitions, field access, methods, and associated functions." },
+    { name = "enum_type",      purpose = "Enum variants, discriminants, and enum-based modeling." },
+    { name = "pattern",        purpose = "Pattern matching, destructuring, guards, and bindings." },
+    { name = "generic",        purpose = "Generic types and functions, bounds, and monomorphization." },
+    { name = "trait_type",     purpose = "Trait definitions, implementations, default methods, and trait objects." },
+    # Memory and ownership
+    { name = "memory",         purpose = "Stack versus heap, data layout, allocation, and Drop." },
+    { name = "ownership",      purpose = "Move semantics, Copy, and ownership transfer." },
+    { name = "borrow",         purpose = "Shared and mutable references and the borrow checker." },
+    { name = "lifetime",       purpose = "Lifetime annotations, elision, and reference validity." },
+    { name = "smart_pointer",  purpose = "Box, Rc, Arc, RefCell, and interior mutability." },
+    # Behavior and abstraction
+    { name = "closure",        purpose = "Closures, capture modes, and Fn / FnMut / FnOnce." },
+    { name = "iterator",       purpose = "The Iterator trait, adapters, and lazy evaluation." },
+    { name = "oop",            purpose = "Encapsulation, composition, and dynamic dispatch patterns." },
+    { name = "conversion",     purpose = "From, Into, TryFrom, and AsRef conversions." },
+    # Data and text
+    { name = "collection",     purpose = "Standard collections: Vec, HashMap, BTreeMap, HashSet." },
+    { name = "string",         purpose = "String and str, UTF-8 encoding, and text manipulation." },
+    { name = "slice",          purpose = "Slices, indexing, and windowed views over sequences." },
+    # Robustness
+    { name = "error",          purpose = "Result, Option, the ? operator, and custom error types." },
+    { name = "testing",        purpose = "Unit tests, integration tests, and documentation tests." },
+    # Program organization
+    { name = "module",         purpose = "Modules, visibility, paths, and re-exports." },
+    { name = "crate_layout",   purpose = "Binary versus library crates and package structure." },
+    # Concurrency
+    { name = "concurrency",    purpose = "Threads, channels, Mutex, and shared-state synchronization." },
+    { name = "async_await",    purpose = "Futures, async and await, and executor concepts." },
+    # Metaprogramming and low level
+    { name = "macro_rules",    purpose = "Declarative macros with macro_rules!." },
+    { name = "proc_macro",     purpose = "Procedural and derive macros." },
+    { name = "unsafe_code",    purpose = "unsafe blocks, raw pointers, and safety invariants." },
+    { name = "ffi",            purpose = "The foreign function interface and C interoperability." },
+    # Systems and I/O
+    { name = "io",             purpose = "Standard input and output, buffering, and read/write traits." },
+    { name = "filesystem",     purpose = "File and path operations." },
+]
