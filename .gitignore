@@ -2,9 +2,9 @@
 /target
 **/*.rs.bk
 
-# Keep Cargo.lock. This workspace ships a binary (hello_world), so the lockfile is
-# committed for reproducible builds. The negation also re-includes it in case a
-# global gitignore excludes Cargo.lock.
+# Keep Cargo.lock. The workspace builds binaries, so the lockfile is committed for
+# reproducible builds. The negation re-includes it in case a global gitignore
+# excludes it.
 !Cargo.lock
 
 # --- debug / profiling byproducts ---
@@ -14,32 +14,53 @@ perf.data.old
 *.perf
 perf.folded
 *.folded
+
 # flamegraph
 flamegraph.svg
 flamegraph.html
+
 # core dumps
 core
 core.*
 *.core
 vgcore.*
+
 # valgrind (callgrind / cachegrind / massif)
 callgrind.out.*
 cachegrind.out.*
 massif.out.*
+
 # strace / ltrace
 *.strace
 *.ltrace
+
 # ftrace-family (trace-cmd)
 trace.dat
 trace-*.dat
+
+# gprof
+gmon.out
+
+# coverage instrumentation
+*.profraw
+*.profdata
+
 # debugger history / cache logs
 .gdb_history
+.lldb_history
 sccache.log
+
+# --- ffi byproducts (hand-compiled C for the ffi topic) ---
+*.o
+*.a
+*.so
 
 # --- editor / OS noise ---
 *.swp
 *.swo
 *~
+*.orig
+*.rej
 .idea/
 .vscode/
 .DS_Store
