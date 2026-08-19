@@ -1,40 +1,13 @@
-# Cargo build configuration.
-# See .project.toml for the authoritative build-system and debug documentation.
-
+# Codegen flags for every build, debug and release alike.
+#   force-frame-pointers  rbp-based frames, so gdb, perf and valgrind unwind reliably
+#   link-dead-code        keeps functions written but never called (debug only in
+#                         effect; the optimizer drops them in release anyway)
+#   relocation-model      non-PIE, so objdump addresses match runtime addresses
+#   dwarf-version         DWARF 5, the richest debug format the installed tools read
 [build]
-# Default-ON codegen flags, both valid on stable 1.96:
-#   symbol-mangling-version=v0 -> readable, demangled symbols in gdb/perf/valgrind
-#   force-frame-pointers=yes   -> reliable frame-pointer unwinding for perf/gdb
-rustflags = ["-C", "symbol-mangling-version=v0", "-C", "force-frame-pointers=yes"]
-
-[alias]
-b = "build"
-t = "test"
-# `-- -D warnings` forwards the deny down to the compiler.
-l = "clippy --all-targets -- -D warnings"
-# Run a topic: `cargo topic <theme>` == `cargo run --bin <theme>`.
-topic = "run --bin"
-
-# ----------------------------------------------------------------------------
-# Optional faster linker (mold or lld).
-# WARNING: a [target.<triple>] rustflags entry fully OVERRIDES [build] rustflags;
-# the two are NOT merged. Any [target.*] block MUST repeat the v0 and
-# force-frame-pointers flags or those default-ON debug flags are silently lost.
-# To keep this repository portable, prefer enabling this in your user-global
-# ~/.cargo/config.toml rather than committing it here.
-#
-# [target.x86_64-unknown-linux-gnu]
-# rustflags = [
-#     "-C", "symbol-mangling-version=v0",
-#     "-C", "force-frame-pointers=yes",
-#     "-C", "link-arg=-fuse-ld=mold",   # or: -fuse-ld=lld
-# ]
-# ----------------------------------------------------------------------------
-
-# ----------------------------------------------------------------------------
-# Optional rustc caching with sccache.
-# Do NOT hardcode a rustc-wrapper here: if sccache is absent, every build breaks.
-# Opt in per shell with an environment variable instead, so absence is harmless:
-#
-#   export RUSTC_WRAPPER=sccache
-# ----------------------------------------------------------------------------
+rustflags = [
+    "-C", "force-frame-pointers=yes",
+    "-C", "link-dead-code",
+    "-C", "relocation-model=static",
+    "-C", "dwarf-version=5",
+]
