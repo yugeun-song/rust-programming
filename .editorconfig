@@ -10,8 +10,17 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 4
 
-[*.{toml,yaml,yml,json}]
+[*.{yaml,yml,json}]
 indent_style = space
+indent_size = 2
+
+# 4 matches Cargo.toml and .cargo/config.toml, and the members entries
+# scaffold.sh writes. The roadmap tables in .project.toml are 2.
+[*.toml]
+indent_style = space
+indent_size = 4
+
+[.project.toml]
 indent_size = 2
 
 [*.md]

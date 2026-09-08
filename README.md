@@ -1,8 +1,8 @@
 # rust-programming
 
 A study archive for the Rust language, organized by topic. Each topic is a crate
-at the repository root holding one file per program. The build is tuned so a
-debug binary reads next to its disassembly.
+at the repository root, and each program in it runs on its own. The build is
+tuned so a debug binary reads next to its disassembly.
 
 ## Layout
 
@@ -11,13 +11,16 @@ Cargo.toml              [workspace] members, profiles
 .cargo/config.toml      codegen flags
 <topic>/
     Cargo.toml          three lines, inherits the workspace
+    src/lib.rs          code shared by the topic's programs, optional
     src/bin/<name>.rs   one program
+    src/bin/<name>/     one program that needs more than one file
 ```
 
 Topic crates sit at the root and are listed in `members`, the way tokio and serde
 lay out their workspaces. Inside a topic the `src/bin` convention applies, so a
-new program is just a new file; a new topic needs a three-line `Cargo.toml` and
-one line in `members`.
+new program is just a new file, or a directory with `main.rs` when it needs more
+than one; a new topic needs a three-line `Cargo.toml` and one line in `members`,
+which `./scaffold.sh <topic> [program ...]` writes.
 
 Binary names must be unique across topics, since every target lands in
 `target/debug/`. Profiles work only in the root manifest: cargo warns about and
