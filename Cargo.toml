@@ -1,10 +1,9 @@
 [workspace]
 resolver = "3"
-# One member per topic, kept sorted by scripts/new_topic.sh. Programs inside a
-# topic are found by Cargo through the src/bin convention and need no entry here.
-members = [
-    "format",
-]
+
+# One member per topic, kept sorted by scaffold.sh. Programs inside a topic are
+# found by Cargo through the src/bin convention and need no entry here.
+members = ["format", "variable"]
 
 [workspace.package]
 edition = "2024"
