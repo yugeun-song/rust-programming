@@ -1,7 +1,8 @@
 # Codegen flags for every build, debug and release alike.
 #   force-frame-pointers  rbp-based frames, so gdb, perf and valgrind unwind reliably
-#   link-dead-code        keeps functions written but never called (debug only in
-#                         effect; the optimizer drops them in release anyway)
+#   link-dead-code        keeps functions written but never called. Effective in
+#                         debug; in release, lto = "thin" drops them at the IR
+#                         level, before the linker sees a section to keep
 #   relocation-model      non-PIE, so objdump addresses match runtime addresses
 #   dwarf-version         DWARF 5, the richest debug format the installed tools read
 [build]

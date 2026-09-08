@@ -47,7 +47,8 @@ cargo expand -p format --bin hello_world                # macro expansion
 Debug keeps source and assembly in step: `opt-level = 0`, `codegen-units = 1`,
 `incremental = false`, `debug = "full"`, unstripped, with debug assertions and
 overflow checks on. The flags in `.cargo/config.toml` add `link-dead-code`, so
-uncalled functions still reach the binary; `relocation-model=static`, so objdump
+uncalled functions still reach the debug binary, though release `lto = "thin"`
+drops them anyway; `relocation-model=static`, so objdump
 addresses are the ones gdb, perf and valgrind report at runtime;
 `force-frame-pointers=yes` for accurate unwinding; and `dwarf-version=5`.
 
@@ -55,17 +56,22 @@ Release adds `lto = "thin"` and `codegen-units = 1`, the usual production tuning
 but keeps debug info, symbols and frame pointers so perf and gdb still work.
 
 Three limits are worth knowing. `#[inline(always)]` is folded even at
-`opt-level = 0`; use `#[inline(never)]`, or add `-C no-prepopulate-passes` to a
-one-off `RUSTFLAGS`, which cannot be permanent because release LTO rejects it.
+`opt-level = 0`; use `#[inline(never)]`, or a one-off `RUSTFLAGS` that repeats
+the four flags from `.cargo/config.toml` and adds `-C no-prepopulate-passes`,
+since `RUSTFLAGS` replaces `build.rustflags` instead of extending it. Confine
+that one-off to debug: next to `link-dead-code` the flag leaves the release
+link with undefined symbols, so it cannot be permanent.
 Macros expand before code generation and leave nothing in DWARF, so read them
 with `cargo expand`. Sanitizers and `cargo fuzz` need nightly, so on stable use
 valgrind for leaks and memory errors.
 
 ## Requirements
 
-rustup with the stable toolchain; `rust-toolchain.toml` installs `rustfmt`,
-`clippy`, `rust-src` and `rust-analyzer` on first use. Nothing else is required.
+rustup with the stable toolchain, plus a C toolchain for `cc`, which rustc calls
+as the linker driver; gcc and clang both work. `rust-toolchain.toml` installs
+`rustfmt`, `clippy`, `rust-src` and `rust-analyzer` on first use. Nothing else
+is required.
 
 Optional: `gdb` and `lldb` behind `rust-gdb` and `rust-lldb`, `binutils` for
 `objdump -dS --demangle` and `readelf`, `perf`, `strace`, `ltrace`, `valgrind`,
-`cargo-show-asm`, `mold`, `sccache`.
+`cargo-expand`, `cargo-show-asm`, `mold`, `sccache`.

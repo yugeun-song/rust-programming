@@ -9,9 +9,10 @@ members = [
 [workspace.package]
 edition = "2024"
 
-# Debug build: nothing optimized away, substituted, or reordered. A single
-# codegen unit with incremental compilation off keeps symbol names and
-# disassembly stable across rebuilds. Codegen flags live in .cargo/config.toml.
+# Debug build: nothing optimized away or reordered, except that inline(always)
+# is still folded in at opt-level 0. A single codegen unit with incremental
+# compilation off keeps symbol names and disassembly stable across rebuilds.
+# Codegen flags live in .cargo/config.toml.
 [profile.dev]
 debug = "full"
 incremental = false
