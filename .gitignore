@@ -19,9 +19,11 @@ perf.folded
 flamegraph.svg
 flamegraph.html
 
-# core dumps
-core
-core.*
+# core dumps. `core.*` and bare `core` are deliberately absent, for different
+# reasons: `core.*` also matches a Rust source file named core.rs, and bare
+# `core` matches anything so named, such as a topic crate or a src/bin/ program
+# directory. systemd-coredump takes the dump anyway.
+core.[0-9]*
 *.core
 vgcore.*
 
@@ -54,6 +56,9 @@ sccache.log
 *.o
 *.a
 *.so
+
+# harness worktrees; a committed .claude/settings.json stays visible
+.claude/worktrees/
 
 # --- editor / OS noise ---
 *.swp
