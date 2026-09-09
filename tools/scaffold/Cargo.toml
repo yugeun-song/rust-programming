@@ -1,0 +1,10 @@
+[package]
+name = "scaffold"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+toml_edit = "0.25"
+
+[workspace]

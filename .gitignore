@@ -1,6 +1,10 @@
 # Rust build artifacts
 /target
+/tools/scaffold/target
 **/*.rs.bk
+
+# scaffold's lock, held only while it rewrites the members array
+/.scaffold.lock
 
 # Keep Cargo.lock. The workspace builds binaries, so the lockfile is committed for
 # reproducible builds. The negation re-includes it in case a global gitignore

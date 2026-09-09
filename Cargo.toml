@@ -1,7 +1,7 @@
 [workspace]
 resolver = "3"
 
-# One member per topic, kept sorted by scaffold.sh. Programs inside a topic are
+# One member per topic, kept sorted by ./scaffold. Programs inside a topic are
 # found by Cargo through the src/bin convention and need no entry here.
 members = ["format", "variable"]
 
