@@ -14,12 +14,12 @@ central_config = "profiles and codegen flags live at the root; a member [profile
 # most of this list is not on disk yet.
 topics = [
   { group = "basics", name = "format",       purpose = "println! and std::fmt: Display, Debug, width, precision, padding." },
-  { group = "basics", name = "binding",      purpose = "let, mut, shadowing, scope, deferred initialization." },
+  { group = "basics", name = "variable",     purpose = "let, mut, shadowing, scope, deferred initialization." },
   { group = "basics", name = "primitive",    purpose = "Integers, floats, bool, char, tuple, array; overflow and checked math." },
   { group = "basics", name = "constant",     purpose = "const and static, const fn, const generics, compile-time evaluation." },
   { group = "basics", name = "expression",   purpose = "Statements versus expressions, blocks as values, the never type." },
   { group = "basics", name = "control_flow", purpose = "if, loop, while, for, labels, if let, let else, while let." },
-  { group = "basics", name = "function",     purpose = "Parameters, return values, diverging functions, function pointers." },
+  { group = "basics", name = "functions",    purpose = "Parameters, return values, diverging functions, function pointers." },
 
   { group = "memory_model", name = "ownership",     purpose = "Move semantics, Copy versus Clone, partial moves, RAII." },
   { group = "memory_model", name = "borrow",        purpose = "Shared and mutable references, aliasing, reborrowing, the borrow checker." },
