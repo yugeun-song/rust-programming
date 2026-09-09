@@ -3,7 +3,7 @@ resolver = "3"
 
 # One member per topic, kept sorted by ./scaffold. Programs inside a topic are
 # found by Cargo through the src/bin convention and need no entry here.
-members = ["format", "variable"]
+members = ["format", "functions", "variable"]
 
 [workspace.package]
 edition = "2024"
