@@ -3,7 +3,7 @@ use std::panic;
 fn do_overflow() {
     let mut x: u8 = u8::MAX;
     println!("just trying to add one...");
-    x += 1;
+    x = x.strict_add(1);
     println!("x is {x}");
 }
 
