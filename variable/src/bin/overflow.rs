@@ -8,7 +8,7 @@ fn do_overflow() {
 }
 
 fn main() {
-    let result = panic::catch_unwind(|| do_overflow());
+    let result = panic::catch_unwind(do_overflow);
 
     match result {
         Ok(_) => println!("completed normally!"),
