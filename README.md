@@ -30,21 +30,22 @@ which `./scaffold <topic> [program ...]` writes.
 The scaffolding tool is a Rust program under `tools/scaffold`. It declares an
 empty `[workspace]` of its own, so its one dependency, `toml_edit`, stays out of
 the study workspace, its lockfile and `cargo build --workspace`. It reads and
-rewrites `members` through that TOML parser instead of matching lines, so the
-array's formatting, comments and quoting do not change the outcome. The new
-entry is spliced in at its sorted position and the entries already there keep
-their order, their comments and their formatting; a topic already listed leaves
-the manifest alone. The tool holds `.scaffold.lock` in the root for the whole
-read and rewrite, verifies the manifest after writing it, and refuses to report
-an edit it did not make. `--dry-run` prints exactly what the real run prints,
-minus the writes.
+rewrites `members` through that TOML parser instead of matching lines: the new
+entry is spliced in at its sorted position, the entries already there keep
+their order, comments and formatting, and a topic already listed leaves the
+manifest alone. Every file is created fresh, never through an existing path or
+a symlink, and a run that fails halfway removes what it wrote. The tool locks
+`.scaffold.lock` in the root for the whole read and rewrite, so a second run
+waits instead of racing and a lock file left by a killed run is harmless. It
+verifies the manifest after writing it and refuses to report an edit it did not
+make. `--dry-run` prints exactly what the real run prints, minus the writes.
 
 The tool carries its own tests, which build synthetic workspaces in a temporary
 directory and drive the binary against them. Completion for topic names lives in
 `tools/scaffold/completions`: source `scaffold.bash` from `~/.bashrc`, or put
 `scaffold.zsh` on `$fpath` as `_scaffold`. Both read the topic list from
-`./scaffold --topics`, so they stay in step with the roadmap and the crates on
-disk.
+`scaffold --topics`, through the built binary when there is one, so they stay in
+step with the roadmap and the crates on disk.
 
 Binary names must be unique across topics, since every target lands in
 `target/debug/`. Profiles work only in the root manifest: cargo warns about and
@@ -98,8 +99,10 @@ valgrind for leaks and memory errors.
 rustup with the stable toolchain, plus a C toolchain for `cc`, which rustc calls
 as the linker driver; gcc and clang both work. `rust-toolchain.toml` installs
 `rustfmt`, `clippy`, `rust-src` and `rust-analyzer` on first use. The first
-`./scaffold` run compiles the tool and fetches `toml_edit` from crates.io; the
-topic crates themselves have no dependencies. Nothing else is required.
+`./scaffold` run compiles the tool, which needs Rust 1.89 or newer, and fetches
+`toml_edit` from crates.io; the topic crates themselves have no dependencies.
+The shim follows a symlink to itself and falls back to `~/.cargo/bin/cargo` when
+`cargo` is not on `PATH`. Nothing else is required.
 
 Optional: `gdb` and `lldb` behind `rust-gdb` and `rust-lldb`, `binutils` for
 `objdump -dS --demangle` and `readelf`, `perf`, `strace`, `ltrace`, `valgrind`,
