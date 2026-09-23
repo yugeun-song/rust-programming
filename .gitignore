@@ -3,8 +3,9 @@
 /tools/scaffold/target
 **/*.rs.bk
 
-# scaffold's lock, held only while it rewrites the members array
+# scaffold's lock and temporary manifest, present only during a run
 /.scaffold.lock
+/.Cargo.toml.scaffold.*
 
 # Keep Cargo.lock. The workspace builds binaries, so the lockfile is committed for
 # reproducible builds. The negation re-includes it in case a global gitignore

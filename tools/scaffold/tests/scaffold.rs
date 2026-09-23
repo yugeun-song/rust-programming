@@ -32,24 +32,24 @@ impl Drop for Repo {
 }
 
 impl Repo {
-    fn new(name: &str) -> Repo {
-        Repo::with_members(name, MEMBERS)
+    fn new(name: &str) -> Self {
+        Self::with_members(name, MEMBERS)
     }
 
-    fn with_members(name: &str, members: &str) -> Repo {
-        Repo::build(name, format!("{HEAD}{members}{TAIL}").as_bytes(), true)
+    fn with_members(name: &str, members: &str) -> Self {
+        Self::build(name, format!("{HEAD}{members}{TAIL}").as_bytes(), true)
     }
 
-    fn raw(name: &str, manifest: &[u8]) -> Repo {
-        Repo::build(name, manifest, true)
+    fn raw(name: &str, manifest: &[u8]) -> Self {
+        Self::build(name, manifest, true)
     }
 
-    fn build(name: &str, manifest: &[u8], crates: bool) -> Repo {
+    fn build(name: &str, manifest: &[u8], crates: bool) -> Self {
         let mut root = env::temp_dir();
         root.push(format!("scaffold-test-{}-{name}", process::id()));
         let _ = fs::remove_dir_all(&root);
         fs::create_dir_all(&root).unwrap();
-        let repo = Repo { root };
+        let repo = Self { root };
         fs::write(repo.path("Cargo.toml"), manifest).unwrap();
         repo.set_mode("Cargo.toml", 0o644);
         repo.write(".project.toml", ROADMAP);
@@ -417,7 +417,8 @@ fn the_dry_run_prints_what_the_real_run_prints() {
 
 #[test]
 fn the_dry_run_agrees_with_the_real_run_on_every_shape() {
-    for (name, block) in SHAPES.iter().chain([("broken", "members = 7\n")].iter()) {
+    let broken = ("broken", "members = 7\n");
+    for (name, block) in SHAPES.iter().chain(std::iter::once(&broken)) {
         let dry = Repo::with_members(&format!("dryshape_{name}"), block);
         let wet = Repo::with_members(&format!("wetshape_{name}"), block);
         assert_eq!(
@@ -519,6 +520,9 @@ fn ignores_an_unparseable_sibling_manifest() {
     let run = repo.run(&["functions"]);
     assert_eq!(run.code, 0, "{}", run.stderr);
     assert_eq!(repo.members(), ["format", "functions", "variable"]);
+    assert!(run.stderr.contains("warning"), "{}", run.stderr);
+    assert!(run.stderr.contains("junk/Cargo.toml"), "{}", run.stderr);
+    assert!(run.stderr.contains("not checked"), "{}", run.stderr);
 }
 
 #[test]
@@ -630,28 +634,24 @@ fn warns_only_about_topics_the_roadmap_really_lacks() {
 #[test]
 fn serialises_concurrent_runs() {
     let repo = Repo::new("concurrent");
-    let root = repo.root.clone();
+    let root = &repo.root;
     let topics = [
         "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta",
     ];
-    let results: Vec<(String, Run)> = std::thread::scope(|scope| {
+    let results: Vec<(&str, Run)> = std::thread::scope(|scope| {
         let handles: Vec<_> = topics
             .iter()
-            .map(|topic| {
-                let root = root.clone();
-                scope.spawn(move || ((*topic).to_string(), run_in(&root, &[topic])))
-            })
+            .map(|topic| scope.spawn(move || (*topic, run_in(root, &[topic]))))
             .collect();
         handles.into_iter().map(|h| h.join().unwrap()).collect()
     });
     let members = repo.members();
     for (topic, run) in &results {
-        if run.code == 0 {
-            assert!(
-                members.contains(topic),
-                "{topic} reported success but is missing from {members:?}"
-            );
-        }
+        assert_eq!(run.code, 0, "{topic}: {}", run.stderr);
+        assert!(
+            members.iter().any(|member| member == topic),
+            "{topic} reported success but is missing from {members:?}"
+        );
     }
     assert!(repo.strays().is_empty(), "{:?}", repo.strays());
 }
@@ -764,4 +764,193 @@ fn cargo_resolves_what_it_wrote() {
     for expected in ["\"functions\"", "\"spanning\""] {
         assert!(json.contains(expected), "cargo did not report {expected}");
     }
+}
+
+#[test]
+fn keeps_each_comment_once_and_on_its_line() {
+    let cases: &[(&str, &str, &str, &[&str])] = &[
+        (
+            "trailing_between",
+            "members = [\n    \"format\",   # printing\n    \"variable\", # bindings\n]\n",
+            "functions",
+            &[
+                "    \"format\",   # printing\n",
+                "    \"functions\",\n",
+                "    \"variable\", # bindings\n",
+            ],
+        ),
+        (
+            "header_first",
+            "members = [\n    # basics\n    \"format\",\n    \"variable\",\n]\n",
+            "alpha",
+            &["    \"alpha\",\n", "    # basics\n    \"format\",\n"],
+        ),
+        (
+            "header_last",
+            "members = [\n    \"format\",\n    # misc\n    \"variable\",\n]\n",
+            "zeta",
+            &["    # misc\n    \"variable\",\n", "    \"zeta\",\n]"],
+        ),
+        (
+            "trailing_last_no_comma",
+            "members = [\n    \"format\",\n    \"variable\" # bindings\n]\n",
+            "zeta",
+            &["    \"variable\", # bindings\n", "    \"zeta\"\n]"],
+        ),
+        (
+            "trailing_last_comma",
+            "members = [\n    \"format\",\n    \"variable\", # bindings\n]\n",
+            "zeta",
+            &["    \"variable\", # bindings\n", "    \"zeta\",\n]"],
+        ),
+        (
+            "blank_line_groups",
+            "members = [\n    \"format\",\n\n    # data\n    \"variable\",\n]\n",
+            "functions",
+            &["    \"functions\",\n\n    # data\n    \"variable\",\n"],
+        ),
+    ];
+    for (name, block, topic, lines) in cases {
+        let repo = Repo::with_members(&format!("once_{name}"), block);
+        let run = repo.run(&[topic]);
+        assert_eq!(run.code, 0, "{name}: {}", run.stderr);
+        let text = repo.read("Cargo.toml");
+        for line in *lines {
+            assert_eq!(text.matches(line).count(), 1, "{name}: {line:?} in {text}");
+        }
+        assert_eq!(
+            text.matches('#').count(),
+            block.matches('#').count(),
+            "{name}: {text}"
+        );
+        assert!(
+            repo.members().iter().any(|member| member == topic),
+            "{name}"
+        );
+    }
+}
+
+#[test]
+fn explains_why_no_workspace_root_was_found() {
+    let cases: &[(&str, &[u8], &str)] = &[
+        (
+            "package_only",
+            b"[package]\nname = \"x\"\nedition = \"2024\"\n",
+            "no [workspace] table",
+        ),
+        (
+            "empty_workspace",
+            b"[workspace]\n",
+            "empty [workspace] table",
+        ),
+        (
+            "unparseable",
+            b"[workspace\nmembers = [\n",
+            "TOML parse error",
+        ),
+    ];
+    for (name, manifest, note) in cases {
+        let repo = Repo::raw(&format!("root_{name}"), manifest);
+        let run = repo.run(&["slice"]);
+        assert_ne!(run.code, 0, "{name}");
+        assert!(
+            run.stderr.contains("no workspace manifest above"),
+            "{name}: {}",
+            run.stderr
+        );
+        assert!(run.stderr.contains("note: "), "{name}: {}", run.stderr);
+        assert!(run.stderr.contains(note), "{name}: {}", run.stderr);
+        assert!(!repo.exists("slice"), "{name}");
+    }
+}
+
+#[test]
+fn hints_at_the_right_option_syntax() {
+    let repo = Repo::new("hints");
+    let cases: &[(&[&str], &str)] = &[
+        (&["slice", "--dir=view"], "--dir view"),
+        (&["slice", "--dir="], "--dir <name>"),
+        (&["slice", "--lib=yes"], "--lib takes no value"),
+        (&["slice", "--libs"], "did you mean --lib?"),
+        (&["slice", "-lib"], "did you mean --lib?"),
+        (&["slice", "-nl"], "-n -l"),
+        (&["slice", "--dir", "--lib"], "needs a name, found --lib"),
+        (&["slice", "--dir"], "needs a name"),
+        (&["slice", "--frob"], "see --help"),
+    ];
+    for (args, hint) in cases {
+        let run = repo.run(args);
+        assert_ne!(run.code, 0, "{args:?}");
+        assert!(run.stderr.contains(hint), "{args:?}: {}", run.stderr);
+        assert!(!repo.exists("slice"), "{args:?}");
+    }
+    assert_eq!(repo.members(), ["format", "variable"]);
+}
+
+#[test]
+fn recovers_from_a_stale_lock_file() {
+    let repo = Repo::new("stale_lock");
+    repo.write(".scaffold.lock", "999999\n");
+    let run = repo.run(&["functions"]);
+    assert_eq!(run.code, 0, "{}", run.stderr);
+    assert_eq!(repo.members(), ["format", "functions", "variable"]);
+    assert!(repo.strays().is_empty(), "{:?}", repo.strays());
+}
+
+#[cfg(unix)]
+#[test]
+fn refuses_to_write_through_a_dangling_symlink() {
+    let repo = Repo::new("dangling");
+    repo.write(
+        "slice/Cargo.toml",
+        "[package]\nname = \"slice\"\nedition.workspace = true\n",
+    );
+    fs::create_dir_all(repo.path("slice/src/bin")).unwrap();
+    let outside = repo.path("outside");
+    fs::create_dir_all(&outside).unwrap();
+    std::os::unix::fs::symlink(
+        outside.join("hijack.rs"),
+        repo.path("slice/src/bin/view.rs"),
+    )
+    .unwrap();
+    let run = repo.run(&["slice", "view"]);
+    assert_ne!(run.code, 0);
+    assert!(run.stderr.contains("already exists"), "{}", run.stderr);
+    assert!(!outside.join("hijack.rs").exists());
+    assert_eq!(repo.members(), ["format", "variable"]);
+
+    let repo = Repo::new("symlinked_src");
+    repo.write(
+        "slice/Cargo.toml",
+        "[package]\nname = \"slice\"\nedition.workspace = true\n",
+    );
+    let outside = repo.path("outside");
+    fs::create_dir_all(&outside).unwrap();
+    std::os::unix::fs::symlink(&outside, repo.path("slice/src")).unwrap();
+    let run = repo.run(&["slice", "view"]);
+    assert_ne!(run.code, 0);
+    assert!(run.stderr.contains("symlink"), "{}", run.stderr);
+    assert_eq!(fs::read_dir(&outside).unwrap().count(), 0);
+    assert_eq!(repo.members(), ["format", "variable"]);
+}
+
+#[cfg(unix)]
+#[test]
+fn removes_what_it_wrote_when_a_later_write_fails() {
+    let repo = Repo::new("rollback");
+    fs::create_dir_all(repo.path("slice/src/bin")).unwrap();
+    repo.set_mode("slice/src/bin", 0o555);
+    if fs::write(repo.path("slice/src/bin/probe"), "").is_ok() {
+        return;
+    }
+    let run = repo.run(&["slice", "view"]);
+    repo.set_mode("slice/src/bin", 0o755);
+    assert_ne!(run.code, 0);
+    assert!(run.stderr.contains("cannot write"), "{}", run.stderr);
+    assert!(run.stderr.contains("removed again"), "{}", run.stderr);
+    assert!(!run.stdout.contains("write  "), "{}", run.stdout);
+    assert!(!repo.exists("slice/Cargo.toml"));
+    assert!(repo.exists("slice/src/bin"));
+    assert_eq!(repo.members(), ["format", "variable"]);
+    assert!(repo.strays().is_empty(), "{:?}", repo.strays());
 }
