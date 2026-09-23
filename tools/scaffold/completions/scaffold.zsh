@@ -14,19 +14,21 @@ _scaffold_root() {
     return 1
 }
 
-_scaffold() {
+_scaffold_topics() {
     local root
-    local -a topics
-    if root="$(_scaffold_root)"; then
-        if [[ -x $root/tools/scaffold/target/debug/scaffold ]]; then
-            topics=(${(f)"$("$root/tools/scaffold/target/debug/scaffold" --topics 2>/dev/null)"})
-        else
-            topics=(${(f)"$("$root/scaffold" --topics 2>/dev/null)"})
-        fi
+    root="$(_scaffold_root)" || return 0
+    if [[ -x $root/tools/scaffold/target/debug/scaffold ]]; then
+        "$root/tools/scaffold/target/debug/scaffold" --topics 2>/dev/null && return 0
     fi
+    "$root/scaffold" --topics 2>/dev/null
+}
 
-    _arguments -s \
-        '(-d --dir)'{-d,--dir}'[a program spanning several files]:name:' \
+_scaffold() {
+    local -a topics
+    topics=(${(f)"$(_scaffold_topics)"})
+
+    _arguments \
+        '*'{-d,--dir}'[a program spanning several files]:name:' \
         '(-l --lib)'{-l,--lib}'[add src/lib.rs, shared by the topic programs]' \
         '(-n --dry-run)'{-n,--dry-run}'[print the plan and write nothing]' \
         '(-t --topics)'{-t,--topics}'[print the known topic names]' \
@@ -35,4 +37,8 @@ _scaffold() {
         '*:program name:'
 }
 
-compdef _scaffold scaffold ./scaffold
+if [[ $funcstack[1] == _scaffold ]]; then
+    _scaffold "$@"
+else
+    compdef _scaffold scaffold ./scaffold
+fi

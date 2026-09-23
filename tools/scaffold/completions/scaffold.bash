@@ -17,10 +17,9 @@ _scaffold_topics() {
     local root
     root="$(_scaffold_root)" || return 0
     if [ -x "$root/tools/scaffold/target/debug/scaffold" ]; then
-        "$root/tools/scaffold/target/debug/scaffold" --topics 2>/dev/null
-    else
-        "$root/scaffold" --topics 2>/dev/null
+        "$root/tools/scaffold/target/debug/scaffold" --topics 2>/dev/null && return 0
     fi
+    "$root/scaffold" --topics 2>/dev/null
 }
 
 _scaffold() {
@@ -36,7 +35,7 @@ _scaffold() {
     esac
 
     if [[ $current == -* ]]; then
-        COMPREPLY=($(compgen -W '-d --dir -l --lib -n --dry-run -t --topics -h --help' -- "$current"))
+        mapfile -t COMPREPLY < <(compgen -W '-d --dir -l --lib -n --dry-run -t --topics -h --help' -- "$current")
         return
     fi
 
@@ -56,7 +55,7 @@ _scaffold() {
     done
 
     if [ "$positionals" -eq 0 ]; then
-        COMPREPLY=($(compgen -W "$(_scaffold_topics)" -- "$current"))
+        mapfile -t COMPREPLY < <(compgen -W "$(_scaffold_topics)" -- "$current")
     else
         COMPREPLY=()
     fi

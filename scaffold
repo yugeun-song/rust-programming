@@ -1,4 +1,26 @@
 #!/usr/bin/env sh
 set -eu
-here=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
-exec cargo run --quiet --manifest-path "$here/tools/scaffold/Cargo.toml" -- "$@"
+
+self=$0
+hops=0
+while [ -L "$self" ] && [ "$hops" -lt 40 ]; do
+    target=$(readlink -- "$self" 2>/dev/null) || break
+    case $target in
+        /*) self=$target ;;
+        *) self=$(dirname -- "$self")/$target ;;
+    esac
+    hops=$((hops + 1))
+done
+here=$(CDPATH='' cd -- "$(dirname -- "$self")" && pwd)
+
+cargo_home=${CARGO_HOME:-${HOME:-}/.cargo}
+if command -v cargo >/dev/null 2>&1; then
+    cargo=cargo
+elif [ -x "$cargo_home/bin/cargo" ]; then
+    cargo=$cargo_home/bin/cargo
+else
+    printf '%s\n' "scaffold: cargo not found in PATH or $cargo_home/bin, install rustup from https://rustup.rs" >&2
+    exit 127
+fi
+
+exec "$cargo" run --quiet --manifest-path "$here/tools/scaffold/Cargo.toml" -- "$@"

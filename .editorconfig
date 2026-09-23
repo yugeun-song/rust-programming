@@ -29,6 +29,6 @@ indent_size = 2
 # Markdown allows trailing whitespace (hard line break), so do not trim it.
 trim_trailing_whitespace = false
 
-[*.sh]
+[{scaffold,*.sh,*.bash,*.zsh}]
 indent_style = space
 indent_size = 4
