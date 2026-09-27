@@ -23,4 +23,4 @@ else
     exit 127
 fi
 
-exec "$cargo" run --quiet --manifest-path "$here/tools/scaffold/Cargo.toml" -- "$@"
+exec "$cargo" run --quiet --locked --manifest-path "$here/tools/scaffold/Cargo.toml" -- "$@"

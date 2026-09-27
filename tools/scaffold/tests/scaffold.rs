@@ -484,6 +484,10 @@ fn rejects_names_it_cannot_write() {
     let run = repo.run(&["target"]);
     assert_ne!(run.code, 0);
     assert!(run.stderr.contains("gitignored"), "{}", run.stderr);
+    let run = repo.run(&["tools"]);
+    assert_ne!(run.code, 0);
+    assert!(run.stderr.contains("scaffolding tool"), "{}", run.stderr);
+    assert!(!repo.exists("tools"));
     assert_eq!(repo.run(&["a".repeat(64).as_str()]).code, 0);
 }
 

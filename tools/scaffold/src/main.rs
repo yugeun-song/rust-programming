@@ -15,7 +15,8 @@ Usage: scaffold <topic> [program ...] [options]
 Creates a topic crate at the repository root, or adds programs to one that is
 already there. The manifest is written by hand rather than by cargo new, so a
 topic named after a Rust keyword works too: cargo new rejects struct, enum,
-trait, async and unsafe, while a hand-written manifest builds them.
+trait, async and unsafe, while a hand-written manifest builds them. Programs in
+such a topic reach its --lib library through a raw identifier, r#enum::name.
 
 Options:
   -d, --dir <name>   a program spanning several files, as src/bin/<name>/main.rs
@@ -1003,6 +1004,9 @@ fn create(args: &Args) -> Result<()> {
     check_name("topic", &args.topic)?;
     if args.topic == "target" {
         return fail("topic 'target' would live in the gitignored build directory");
+    }
+    if args.topic == "tools" {
+        return fail("topic 'tools' would live in the directory of the scaffolding tool");
     }
 
     let root = find_root()?;
