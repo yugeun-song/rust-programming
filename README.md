@@ -59,12 +59,16 @@ cargo build --release          # optimized, still debuggable
 cargo run -p format --bin hello_world
 cargo test --workspace
 cargo test --manifest-path tools/scaffold/Cargo.toml   # the scaffolding tool
-cargo clippy --workspace --all-targets -- -D warnings
+cargo clippy --workspace --all-targets
 cargo fmt --all
 ls */src/bin/                  # every program, by topic
 ```
 
-Neither profile needs an argument or an environment variable.
+Neither profile needs an argument or an environment variable. Clippy runs
+without `-D warnings` on purpose: a program breaks a style lint wherever the
+lesson calls for it, while the correctness group is deny-by-default already, so
+a real mistake still fails the run. The tool under `tools/scaffold` is ordinary
+code and is held to `-D warnings`.
 
 ```sh
 cargo rustc -p format --bin hello_world -- --emit asm   # assembly

@@ -995,7 +995,7 @@ fn report(root: &Path, topic: &str, plan: &Plan, edited: bool) -> String {
     for name in &plan.programs {
         let _ = writeln!(text, "  cargo run -p {topic} --bin {name}");
     }
-    text.push_str("  cargo clippy --workspace --all-targets -- -D warnings\n");
+    text.push_str("  cargo clippy --workspace --all-targets\n");
     text
 }
 
