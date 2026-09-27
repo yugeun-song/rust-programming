@@ -1,0 +1,3 @@
+[package]
+name = "statement"
+edition.workspace = true
