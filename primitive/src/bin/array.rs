@@ -1,25 +1,26 @@
 use std::panic;
 
-fn do_overflow() {
+fn index_out_of_bounds() {
     let mut arr: [i32; 5] = [1, 2, 3, 4, 5];
 
+    println!("indexing arr[0] through arr[9] on a [i32; 5]");
     for i in 0..10 {
-        println!("arr[{}] is {}", i, arr[i]);
+        println!("arr[{i}] is {}", arr[i]);
         arr[i] = 0;
     }
 }
 
 fn main() {
-    let arr1: [i32; 5] = [1, 2, 3, 4, 5];
-    let arr2: [i32; 5] = [3; 5];
+    let listed: [i32; 5] = [1, 2, 3, 4, 5];
+    let repeated: [i32; 5] = [3; 5];
 
-    println!("{:?}", arr1);
-    println!("{:?}", arr2);
+    println!("listed   {listed:?}, written out element by element");
+    println!("repeated {repeated:?}, written as [3; 5]");
 
-    let result = panic::catch_unwind(do_overflow);
+    let result = panic::catch_unwind(index_out_of_bounds);
 
     match result {
-        Ok(_) => println!("completed normally!"),
-        Err(_) => println!("panic caught!"),
+        Ok(()) => println!("completed normally"),
+        Err(_) => println!("panic caught: every index is checked at run time"),
     }
 }

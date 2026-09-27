@@ -1,8 +1,8 @@
 fn main() {
     let result = {
-        let dummy = 10;
-        dummy * 20
+        let inner = 10;
+        inner * 20
     };
 
-    println!("y is {}", result);
+    println!("result is {result}, the value of the block's final expression");
 }
