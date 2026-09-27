@@ -19,7 +19,7 @@ topics = [
   { group = "basics", name = "constant",     purpose = "const and static, const fn, const generics, compile-time evaluation." },
   { group = "basics", name = "expression",   purpose = "Statements versus expressions, blocks as values, the never type." },
   { group = "basics", name = "control_flow", purpose = "if, loop, while, for, labels, if let, let else, while let." },
-  { group = "basics", name = "functions",    purpose = "Parameters, return values, diverging functions, function pointers." },
+  { group = "basics", name = "function",     purpose = "Parameters, return values, diverging functions, function pointers." },
 
   { group = "memory_model", name = "ownership",     purpose = "Move semantics, Copy versus Clone, partial moves, RAII." },
   { group = "memory_model", name = "borrow",        purpose = "Shared and mutable references, aliasing, reborrowing, the borrow checker." },

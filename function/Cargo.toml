@@ -1,0 +1,3 @@
+[package]
+name = "function"
+edition.workspace = true
